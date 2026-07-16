@@ -207,4 +207,31 @@ end
         @test sDF32 ≈ Float32(ref_sD)  rtol = 5e-2
         @test sDF64 ≈ ref_sD  rtol = 1e-3
     end
+
+    # ── Linearized and original preallocated interfaces ───────────────────────────────── #
+    #    Julia matrices use column-major linear indexing. For a 2×2 output,
+    #    indices 1 and 2 traverse Kxs at the first Kz, while indices 3 and 4
+    #    traverse Kxs at the second Kz. The original three-argument interface
+    #    must remain equivalent to evaluating all four linear indices.
+    @testset "Preallocated vector interfaces" begin
+        Kxs = Float32[ΚH(24.0f0), ΚH(30.0f0)]
+        Kzs = Float32[ΚH(30.0f0), ΚH(36.0f0)]
+        expected = [linAF32(Kx, Kz) for Kx in Kxs, Kz in Kzs]
+
+        linearized = fill(Float32(NaN), length(Kxs), length(Kzs))
+        for i in 1:length(linearized)
+            @test isnothing(linAF32(linearized, Kxs, Kzs, i))
+        end
+        @test linearized ≈ expected
+
+        original = similar(linearized)
+        @test isnothing(linAF32(original, Kxs, Kzs))
+        @test original ≈ expected
+        @test linAF32(Kxs, Kzs) ≈ expected
+
+        @test_throws BoundsError linAF32(linearized, Kxs, Kzs, 0)
+        @test_throws BoundsError linAF32(linearized, Kxs, Kzs, length(linearized) + 1)
+        @test_throws DimensionMismatch linAF32(zeros(Float32, 1, 4), Kxs, Kzs, 1)
+        @test_throws DimensionMismatch linAF32(zeros(Float32, 1, 4), Kxs, Kzs)
+    end
 end

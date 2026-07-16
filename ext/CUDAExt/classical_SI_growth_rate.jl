@@ -35,7 +35,7 @@ end
         B = -im * Κx * vx
 
         if !isfinite(Κx) | !isfinite(Κz) | !isfinite(A) | !isfinite(B) | !isfinite(invSt) | !isfinite(εinvSt) | !isfinite(Rx) | !isfinite(Ry)
-            @inbounds SIgrowth[idx, jdx] = T(NaN)
+            @inbounds SIgrowth[i] = T(NaN)
         else
             @inbounds begin
                 fill!(M, zero(ComplexT))
@@ -74,7 +74,9 @@ end
                 M[5,8] = -im * Κz
                 M[8,8] = B - εinvSt
             end
-            SIgrowth[idx, jdx] = StreamingInstability._realλ_max(M)
+            # Match the CPU linearized interface: idx and jdx select the
+            # wavenumbers, while i is the linear output index.
+            @inbounds SIgrowth[i] = StreamingInstability._realλ_max(M)
         end
 
         i += stride
