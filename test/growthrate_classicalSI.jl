@@ -38,21 +38,21 @@ invηvₖlcₛ = inv(ηvₖlcₛ)   # cₛ / (ηvₖ)
 # ========================== Helper functions ================================ #
 
 """Convert wavenumber from ηr units (literature) to H units (matrix)."""
-@inline ΚH(kηr::T) where {T<:AbstractFloat} = invηvₖlcₛ * kηr
+@inline ΚH(kηr :: T) where {T<:AbstractFloat} = T(invηvₖlcₛ) * kηr
 
 """Dust density from gas density and dust-to-gas ratio."""
-@inline ρ̃d(ρ̃g::TF, ε::TF) where {TF<:AbstractFloat} = ρ̃g * ε
+@inline ρ̃d(ρ̃g :: TF, ε :: TF) where {TF<:AbstractFloat} = ρ̃g * ε
 
 """Convert velocity from ηvₖ units (literature) to cₛ units (matrix)."""
-@inline vlcₛ(ṽ::T) where {T<:Complex} = ηvₖlcₛ * ṽ
+@inline vlcₛ(ṽ :: T) where {T<:Complex} = ηvₖlcₛ * ṽ
 
 # ── Equilibrium velocities (Nakagawa–Sekiya–Hayashi drift) ──────────── #
 ## doi: 10.1016/0019-1035(86)90121-1
-Δ(ε, τ)      = (1 + ε)^2 + τ^2
-uxlcₛ(ε, τ)  =  (ηvₖlcₛ) * (2ε * τ)           / Δ(ε, τ)
-uylcₛ(ε, τ)  = -(ηvₖlcₛ) * (1 + ε*τ^2/Δ(ε,τ)) / (1 + ε)
-wxlcₛ(ε, τ)  = -(ηvₖlcₛ) * 2τ                 / Δ(ε, τ)
-wylcₛ(ε, τ)  = -(ηvₖlcₛ) * (1 - τ^2/Δ(ε,τ))   / (1 + ε)
+Δ(ε :: T, τ :: T)    where {T <: AbstractFloat}  = (one(T) + ε) * (one(T) + ε) + τ * τ
+uxlcₛ(ε :: T, τ :: T) where {T <: AbstractFloat} =  T(ηvₖlcₛ) * (T(2) * ε * τ)           / Δ(ε, τ)
+uylcₛ(ε :: T, τ :: T) where {T <: AbstractFloat} = -T(ηvₖlcₛ) * (one(T) + ε*τ*τ/Δ(ε,τ))  / (one(T) + ε)
+wxlcₛ(ε :: T, τ :: T) where {T <: AbstractFloat} = -T(ηvₖlcₛ) * T(2) * τ                 / Δ(ε, τ)
+wylcₛ(ε :: T, τ :: T) where {T <: AbstractFloat} = -T(ηvₖlcₛ) * (one(T) - τ*τ/Δ(ε,τ))    / (one(T) + ε)
 
 # ── Convenience constructor: build input from (St, ε) alone ───────── #
 
@@ -61,7 +61,7 @@ function StreamingInstability.ClassicalSIGrowthRateInput(St::T, ε::T) where {T<
     vylcs = uylcₛ(ε, St)
     wxlcs = wxlcₛ(ε, St)
     wylcs = wylcₛ(ε, St)
-    ρg    = 1.0
+    ρg    = one(T)
     ρd    = ρ̃d(ρg, ε)
     return StreamingInstability.ClassicalSIGrowthRateInput(St, ρg, ρd, vxlcs, vylcs, wxlcs, wylcs)
 end
@@ -147,19 +147,27 @@ end
 
 # ============================== Test body =================================== #
 
-@testset "Streaming Instability — Linear Growth Rate" begin
+@testset "Streaming Instability -- Linear Growth Rate" begin
 
     # ── Build linearised inputs from (St, ε) ────────────────────── #
-    linA = ClassicalSIGrowthRateInput(0.1,   3.0)
-    linB = ClassicalSIGrowthRateInput(0.1,   0.2)
-    linC = ClassicalSIGrowthRateInput(0.01,  2.0)
-    linD = ClassicalSIGrowthRateInput(0.001, 2.0)
+    linAF32 = ClassicalSIGrowthRateInput(Float32(0.1),   Float32(3.0))
+    linBF32 = ClassicalSIGrowthRateInput(Float32(0.1),   Float32(0.2))
+    linCF32 = ClassicalSIGrowthRateInput(Float32(0.01),  Float32(2.0))
+    linDF32 = ClassicalSIGrowthRateInput(Float32(0.001), Float32(2.0))
+    linAF64 = ClassicalSIGrowthRateInput(0.1,   3.0)
+    linBF64 = ClassicalSIGrowthRateInput(0.1,   0.2)
+    linCF64 = ClassicalSIGrowthRateInput(0.01,  2.0)
+    linDF64 = ClassicalSIGrowthRateInput(0.001, 2.0)
 
     # ── Compute growth rates ──────────────────────────────── #
-    sA = linA(ΚH(30.0),   ΚH(30.0))
-    sB = linB(ΚH(6.0),    ΚH(6.0))
-    sC = linC(ΚH(1500.0), ΚH(1500.0))
-    sD = linD(ΚH(2000.0), ΚH(2000.0))
+    sAF32 = linAF32(ΚH(Float32(30.0)),   ΚH(Float32(30.0)))
+    sBF32 = linBF32(ΚH(Float32(6.0)),    ΚH(Float32(6.0)))
+    sCF32 = linCF32(ΚH(Float32(1500.0)), ΚH(Float32(1500.0)))
+    sDF32 = linDF32(ΚH(Float32(2000.0)), ΚH(Float32(2000.0)))
+    sAF64 = linAF64(ΚH(30.0),   ΚH(30.0))
+    sBF64 = linBF64(ΚH(6.0),    ΚH(6.0))
+    sCF64 = linCF64(ΚH(1500.0), ΚH(1500.0))
+    sDF64 = linDF64(ΚH(2000.0), ΚH(2000.0))
 
     # ── Expected growth rates: Im(ω/Ω) from the literature ─────── #
     #    Our eigensystem returns  max Re(λ) = Im(ω/Ω)  due to the sign
@@ -169,30 +177,34 @@ end
     ref_sC = 0.5980690     # Bai & Stone       (2010) linC
     ref_sD = 0.3154373     # Bai & Stone       (2010) linD
 
-    # ── Assertions ────────────────────────────────────────── #
-    #    Tolerance: 1e-3 relative (0.1 %).
-    #    Sources of deviation from the tabulated values:
-    #      • Reference values are truncated to 7 significant digits.
-    #      • Our solver uses a custom tiny-matrix eigensolver
-    #        (TinyEigvals, N = 8) with Hessenberg-based QR iteration,
-    #        whereas the reference codes use full LAPACK.
-    #      • Balancing / scaling heuristics differ.
-    #    A 0.1 % tolerance is more than adequate for verifying physical
-    #    correctness of the linearised growth rate.
+    # ── Assertions ─────────────────────────────────────────────────────────── #
+    #    Relative tolerances:
+    #      • Float32: 5e-2 (5%), set by the linD benchmark, for which the
+    #        observed relative deviation is approximately 3.9%.
+    #      • Float64: 1e-3 (0.1%).
+    #
+    #    The remaining Float32 benchmarks agree with the published growth rates
+    #    to within approximately 0.15%. These tolerances validate agreement of
+    #    the physically relevant growth rates at the selected benchmark points,
+    #    rather than machine-precision agreement of the complete eigensystems.
 
     @testset "linA  (St=0.1,  ε=3.0,  K=30)"   begin
-        @test sA ≈ ref_sA  rtol = 1e-3
+        @test sAF32 ≈ Float32(ref_sA)  rtol = 5e-2
+        @test sAF64 ≈ ref_sA  rtol = 1e-3
     end
 
     @testset "linB  (St=0.1,  ε=0.2,  K=6)"    begin
-        @test sB ≈ ref_sB  rtol = 1e-3
+        @test sBF32 ≈ Float32(ref_sB)  rtol = 5e-2
+        @test sBF64 ≈ ref_sB  rtol = 1e-3
     end
 
     @testset "linC  (St=0.01, ε=2.0,  K=1500)" begin
-        @test sC ≈ ref_sC  rtol = 1e-3
+        @test sCF32 ≈ Float32(ref_sC)  rtol = 5e-2
+        @test sCF64 ≈ ref_sC  rtol = 1e-3
     end
 
     @testset "linD  (St=1e-3, ε=2.0,  K=2000)" begin
-        @test sD ≈ ref_sD  rtol = 1e-3
+        @test sDF32 ≈ Float32(ref_sD)  rtol = 5e-2
+        @test sDF64 ≈ ref_sD  rtol = 1e-3
     end
 end
