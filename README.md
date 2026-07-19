@@ -1,6 +1,6 @@
 # StreamingInstability.jl
 
-`StreamingInstability.jl` implements a classical linear streaming-instability growth-rate solver for dust-gas mixtures in protoplanetary discs, following the method of [Chen & Lin (2020)](https://doi.org/10.3847/1538-4357/ab76ca).  The package supports both single-mode evaluation and growth-rate maps over a wavenumber grid, and uses [`TinyEigvals.jl`](https://github.com/weishansu011017/TinyEigvals.jl) for the small dense eigenvalue problems. Currently only the classical single-species linear growth-rate solver is implemented.
+`StreamingInstability.jl` implements a solver of linear growth rate of the classical linear streaming instability for dust-gas mixtures in protoplanetary discs, following the method of [Chen & Lin (2020)](https://doi.org/10.3847/1538-4357/ab76ca).  The package supports both single-mode evaluation and growth-rate maps over a wavenumber grid, and uses [`TinyEigvals.jl`](https://github.com/weishansu011017/TinyEigvals.jl) for the small dense eigenvalue problems. Currently only the classical single-species linear growth-rate solver is implemented.
 
 
 
